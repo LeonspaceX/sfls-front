@@ -7,28 +7,68 @@ export interface AdminAuthResponse {
   message?: string;
 }
 
-// 管理员密码缓存键
+// 管理员令牌存储键（Cookie）
 const ADMIN_TOKEN_KEY = 'admin_token';
+
+// Cookie 工具函数
+const isHttps = () => typeof window !== 'undefined' && window.location?.protocol === 'https:';
+
+const setCookie = (name: string, value: string, options?: { maxAgeSeconds?: number; path?: string; sameSite?: 'Lax' | 'Strict' | 'None' }): void => {
+  const path = options?.path ?? '/';
+  const sameSite = options?.sameSite ?? 'Lax';
+  const parts = [
+    `${encodeURIComponent(name)}=${encodeURIComponent(value)}`,
+    `Path=${path}`,
+    `SameSite=${sameSite}`,
+  ];
+  if (isHttps()) parts.push('Secure');
+  if (typeof options?.maxAgeSeconds === 'number') parts.push(`Max-Age=${options!.maxAgeSeconds}`);
+  document.cookie = parts.join('; ');
+};
+
+const getCookie = (name: string): string | null => {
+  const target = encodeURIComponent(name) + '=';
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+  for (const c of cookies) {
+    if (c.startsWith(target)) {
+      try { return decodeURIComponent(c.slice(target.length)); } catch { return c.slice(target.length); }
+    }
+  }
+  return null;
+};
+
+const deleteCookie = (name: string): void => {
+  const parts = [
+    `${encodeURIComponent(name)}=`,
+    'Path=/',
+    'Max-Age=0',
+    'SameSite=Lax',
+  ];
+  if (isHttps()) parts.push('Secure');
+  document.cookie = parts.join('; ');
+};
 
 /**
  * 获取存储的管理员令牌
  */
 export const getAdminToken = (): string | null => {
-  return localStorage.getItem(ADMIN_TOKEN_KEY);
+  return getCookie(ADMIN_TOKEN_KEY);
 };
 
 /**
  * 存储管理员令牌
  */
-export const setAdminToken = (token: string): void => {
-  localStorage.setItem(ADMIN_TOKEN_KEY, token);
+export const setAdminToken = (token: string, persist: boolean = false): void => {
+  // persist=false: 会话 Cookie（浏览器关闭后失效）；persist=true: 持久 Cookie（默认 7 天）
+  const maxAge = persist ? 7 * 24 * 60 * 60 : undefined;
+  setCookie(ADMIN_TOKEN_KEY, token, { maxAgeSeconds: maxAge, path: '/', sameSite: 'Lax' });
 };
 
 /**
  * 清除管理员令牌
  */
 export const clearAdminToken = (): void => {
-  localStorage.removeItem(ADMIN_TOKEN_KEY);
+  deleteCookie(ADMIN_TOKEN_KEY);
 };
 
 /**
@@ -36,7 +76,7 @@ export const clearAdminToken = (): void => {
  * @param password 管理员密码
  * @returns Promise<AdminAuthResponse>
  */
-export const verifyAdminPassword = async (password: string): Promise<AdminAuthResponse> => {
+export const verifyAdminPassword = async (password: string, remember: boolean = false): Promise<AdminAuthResponse> => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}/admin/test`, {
       method: 'GET',
@@ -54,8 +94,8 @@ export const verifyAdminPassword = async (password: string): Promise<AdminAuthRe
     }
 
     if (response.ok) {
-      // 密码正确，存储到缓存
-      setAdminToken(password);
+      // 密码正确，存储到 Cookie
+      setAdminToken(password, !!remember);
       return {
         success: true,
         message: '登录成功'

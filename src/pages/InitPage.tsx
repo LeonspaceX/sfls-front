@@ -79,7 +79,7 @@ const InitPage: React.FC = () => {
         <CardHeader header={<Title2> 😉 初始化后端</Title2>} />
         <CardPreview>
           <div className={styles.content}>
-            <Text weight="semibold">🎊 恭喜！只差最后一步，即可开始使用！ 为保证安全，后续需通过config.py修改配置</Text>
+            <Text weight="semibold">🎊 恭喜！只差最后一步，即可开始使用！ 后续可通过config.py二次修改配置</Text>
             <Field label="管理员令牌">
               <Input value={adminToken} onChange={(_, v) => setAdminToken(v?.value || '')} placeholder="请输入管理员令牌" />
             </Field>

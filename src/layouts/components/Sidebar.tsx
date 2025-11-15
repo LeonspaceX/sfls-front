@@ -1,5 +1,5 @@
 import { makeStyles, tokens } from '@fluentui/react-components';
-import { Home24Regular, Add24Regular, History24Regular, Info24Regular, DocumentSearch24Regular, PeopleSearch24Regular, ChevronDown24Regular, ChevronRight24Regular } from '@fluentui/react-icons';
+import { Home24Regular, Add24Regular, History24Regular, Info24Regular, DocumentSearch24Regular, PeopleSearch24Regular, ChevronDown24Regular, ChevronRight24Regular, Settings24Regular } from '@fluentui/react-icons';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -42,6 +42,7 @@ const menuItems = [
       { path: '/progress/complaint', icon: PeopleSearch24Regular, label: '投诉受理' }
     ]
   },
+  { path: '/admin', icon: Settings24Regular, label: '管理面板' },
   { path: '/about', icon: Info24Regular, label: '关于' },
 ];
 

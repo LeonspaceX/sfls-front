@@ -20,6 +20,7 @@ import {
 } from '@fluentui/react-icons';
 import ReportPost from './ReportPost';
 import CommentSection from './CommentSection';
+import ImageViewer from './ImageViewer';
 
 const useStyles = makeStyles({
   card: {
@@ -91,6 +92,13 @@ const useStyles = makeStyles({
       textDecoration: 'underline',
       backgroundColor: 'transparent',
     },
+    // 约束 Markdown 图片不溢出卡片
+    '& img': {
+      maxWidth: '100%',
+      height: 'auto',
+      display: 'block',
+      borderRadius: tokens.borderRadiusSmall,
+    },
   },
   actions: {
     display: 'grid',
@@ -146,12 +154,32 @@ const PostCard = ({
   const [hasVoted, setHasVoted] = React.useState(false);
   const [showReportModal, setShowReportModal] = React.useState(false);
   const [showComments, setShowComments] = React.useState(false);
+  const [imageViewer, setImageViewer] = React.useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
+
+  const openImageViewer = (src?: string, alt?: string) => {
+    if (!src) return;
+    setImageViewer({ open: true, src, alt });
+  };
+  const closeImageViewer = () => setImageViewer({ open: false });
 
   return (
     <Card className={styles.card}>
       <div className={styles.content}>
         <div style={{ whiteSpace: 'pre-wrap' }}>
-          <ReactMarkdown remarkPlugins={[remarkGfm, remarkIns]}>{markdownContent}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkIns]}
+            components={{
+              img: (props) => (
+                <img
+                  {...props}
+                  style={{ cursor: 'zoom-in', maxWidth: '100%', height: 'auto', display: 'block' }}
+                  onClick={() => openImageViewer(props.src as string, props.alt as string)}
+                />
+              ),
+            }}
+          >
+            {markdownContent}
+          </ReactMarkdown>
         </div>
       </div>
       <CardFooter>
@@ -219,6 +247,10 @@ const PostCard = ({
         <div className={styles.modalOverlay}>
           <ReportPost postId={id} onClose={() => setShowReportModal(false)} />
         </div>
+      )}
+
+      {imageViewer.open && imageViewer.src && (
+        <ImageViewer src={imageViewer.src!} alt={imageViewer.alt} onClose={closeImageViewer} />
       )}
     </Card>
   );

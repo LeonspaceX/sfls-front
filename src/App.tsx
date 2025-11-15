@@ -1,3 +1,5 @@
+// 你好。
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FluentProvider, webLightTheme, webDarkTheme } from '@fluentui/react-components';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';

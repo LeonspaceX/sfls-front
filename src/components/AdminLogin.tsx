@@ -10,8 +10,10 @@ import {
   tokens,
   Spinner,
   Field,
+  Checkbox,
 } from '@fluentui/react-components';
-import { LockClosed24Regular, Shield24Regular, ShieldLock24Regular} from '@fluentui/react-icons';
+import { LockClosed24Regular, Shield24Regular, ShieldLock24Regular, ArrowLeft24Regular } from '@fluentui/react-icons';
+import { Link } from 'react-router-dom';
 import { verifyAdminPassword } from '../admin_api';
 import { toast } from 'react-hot-toast';
 
@@ -73,6 +75,11 @@ const useStyles = makeStyles({
     width: '100%',
     marginTop: tokens.spacingVerticalS,
   },
+  backHomeContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: tokens.spacingVerticalS,
+  },
   loadingContainer: {
     display: 'flex',
     alignItems: 'center',
@@ -89,6 +96,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   const styles = useStyles();
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [remember, setRemember] = useState(false);
 
   const handleLogin = async () => {
     if (!password.trim()) {
@@ -98,7 +106,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
     setLoading(true);
     try {
-      const result = await verifyAdminPassword(password);
+      const result = await verifyAdminPassword(password, remember);
       
       if (result.success) {
         toast.success(result.message || '登录成功');
@@ -153,6 +161,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
               />
             </Field>
 
+            <Checkbox
+              checked={remember}
+              onChange={(_, data) => setRemember(!!data.checked)}
+              label="记住密码"
+              disabled={loading}
+            />
+
             <Button
               appearance="primary"
               size="large"
@@ -169,6 +184,14 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
                 '登录'
               )}
             </Button>
+
+            
+
+            <div className={styles.backHomeContainer}>
+              <Link to="/" style={{ textDecoration: 'none' }}>
+                <Button appearance="transparent" icon={<ArrowLeft24Regular />}>返回首页</Button>
+              </Link>
+            </div>
           </div>
         </CardPreview>
       </Card>

@@ -60,8 +60,8 @@ const NotFound: React.FC = () => {
           <div className={styles.preview} />
         </CardPreview>
         <div className={styles.content}>
-          <Subtitle1>抱歉，你访问的页面不存在或已被移动。</Subtitle1>
-          <Text>请检查链接是否正确，或使用下方按钮返回继续浏览。</Text>
+          <Subtitle1>Oh no, 页面不见了喵😭</Subtitle1>
+          <Text>请检查链接是否正确，或使用下方按钮继续浏览。</Text>
           <div className={styles.actions}>
             <Button appearance="primary" icon={<ArrowLeft24Regular />} onClick={() => navigate(-1)}>
               返回上一页

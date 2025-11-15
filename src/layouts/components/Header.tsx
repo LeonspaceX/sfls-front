@@ -1,8 +1,8 @@
 import { makeStyles, Text, tokens, Button } from '@fluentui/react-components';
-import { WeatherSunny24Regular, WeatherMoon24Regular } from '@fluentui/react-icons';
+import { WeatherSunny24Regular, WeatherMoon24Regular, Code24Regular } from '@fluentui/react-icons';
 
 import icon from '/icon.png';
-import { SITE_TITLE } from '../../config';
+import { SITE_TITLE, EnableCodeIcon, RepoUrl } from '../../config';
 
 const useStyles = makeStyles({
   header: {
@@ -62,6 +62,14 @@ const Header = ({ isDarkMode, onToggleTheme, onToggleSidebar }: HeaderProps) => 
           onClick={onToggleTheme}
           className={styles.themeToggle}
         />
+        {EnableCodeIcon && (
+          <Button
+            appearance="transparent"
+            icon={<Code24Regular />}
+            title="项目源代码"
+            onClick={() => window.open(RepoUrl, '_blank', 'noopener,noreferrer')}
+          />
+        )}
       </div>
     </header>
   );

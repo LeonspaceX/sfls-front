@@ -53,10 +53,69 @@ const CreatePost: React.FC<CreatePostProps> = ({ onSubmitSuccess }) => {
   };
 
   const handleImageUpload = async (file: File): Promise<string> => {
+    // 轻度压缩：最大宽高 1920，JPEG/WebP 质量 0.85；
+    // 对 PNG/GIF 保留格式，仅缩放尺寸以避免质量损失或动画丢失。
+    const compressImage = (srcFile: File): Promise<File> => {
+      return new Promise((resolve) => {
+        try {
+          const isGif = srcFile.type === 'image/gif';
+          // 对动图或极小文件不做压缩
+          if (isGif || srcFile.size < 150 * 1024) {
+            resolve(srcFile);
+            return;
+          }
+
+          const img = new Image();
+          img.onload = () => {
+            const maxW = 1920;
+            const maxH = 1920;
+            let { width, height } = img;
+            const ratio = Math.min(1, Math.min(maxW / width, maxH / height));
+            const targetW = Math.max(1, Math.round(width * ratio));
+            const targetH = Math.max(1, Math.round(height * ratio));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(srcFile);
+              return;
+            }
+            ctx.drawImage(img, 0, 0, targetW, targetH);
+
+            const preferJpeg = srcFile.type === 'image/jpeg' || srcFile.type === 'image/jpg';
+            const preferPng = srcFile.type === 'image/png';
+            const mime = preferJpeg ? 'image/jpeg' : preferPng ? 'image/png' : 'image/webp';
+            const quality = preferPng ? undefined : 0.85; // PNG 质量参数无效，仅靠缩放降体积
+
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  resolve(srcFile);
+                  return;
+                }
+                const outName = srcFile.name;
+                const fileOut = new File([blob], outName, { type: mime });
+                // 若压缩后反而更大，则沿用原文件
+                resolve(fileOut.size < srcFile.size ? fileOut : srcFile);
+              },
+              mime,
+              quality
+            );
+          };
+          img.onerror = () => resolve(srcFile);
+          img.src = URL.createObjectURL(srcFile);
+        } catch {
+          resolve(srcFile);
+        }
+      });
+    };
 
     try {
+      const compressed = await compressImage(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressed);
 
       const response = await uploadImage(formData);
       if (response.status === 'OK' && response.url) {

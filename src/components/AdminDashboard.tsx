@@ -17,7 +17,7 @@ import {
   shorthands,
 } from '@fluentui/react-components';
 import type { TabValue } from '@fluentui/react-components';
-import { getAuditMode, setAuditMode, getBackupZip, recoverBackup, getPicLinks, deletePic, type PicLink, getPendingReports, approveReport, rejectReport, type PendingReport, getAdminPostInfo, getPendingPosts, getRejectedPosts, type AdminPostListItem, approvePost, disapprovePost, reauditPost, deletePost, modifyPost, 
+import { getAuditMode, setAuditMode, getBackupZip, recoverBackup, getPicLinks, deletePic, type PicLink, getPendingReports, approveReport, rejectReport, type PendingReport, getAdminPostInfo, getPendingPosts, getRejectedPosts, type AdminPostListItem, approvePost, disapprovePost, reauditPost, deletePost, 
   getBannedKeywords, setBannedKeywordsList } from '../admin_api';
 import { Switch } from '@fluentui/react-components';
 import { toast } from 'react-hot-toast';
@@ -31,13 +31,16 @@ import {
   QuestionCircle20Regular,
 } from '@fluentui/react-icons';
 import { adminLogout } from '../admin_api';
-import { SITE_TITLE } from '../config';
+import { SITE_TITLE, SITE_FOOTER_MD } from '../config';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import icon from '/icon.png';
 import AdminPostCard from './AdminPostCard';
 import AdminModifyPost from './AdminModifyPost';
 import AdminManageComments from './AdminManageComments';
 import { fetchArticles, type Article } from '../api';
+import ImageViewer from './ImageViewer';
 
 const useStyles = makeStyles({
   root: {
@@ -212,6 +215,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [bannedSaving, setBannedSaving] = React.useState<boolean>(false);
   const fileImportRef = React.useRef<HTMLInputElement | null>(null);
   const [importing, setImporting] = React.useState<boolean>(false);
+  // 图片预览器状态
+  const [imageViewer, setImageViewer] = React.useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
 
   React.useEffect(() => {
     if (activeTab === 'systemSettings') {
@@ -923,7 +928,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {picList.map((item, idx) => (
                       <div key={`${picPage}-${item.filename || item.url || 'unknown'}-${item.upload_time || 'na'}-${idx}`} style={{ border: `1px solid ${tokens.colorNeutralStroke1}`, borderRadius: tokens.borderRadiusMedium, padding: tokens.spacingHorizontalS }}>
                         {item.url && item.url.trim() !== '' ? (
-                          <img src={item.url} alt={item.filename || '图片'} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: tokens.borderRadiusSmall }} />
+                          <img src={item.url} alt={item.filename || '图片'} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: tokens.borderRadiusSmall, cursor: 'zoom-in' }} onClick={() => setImageViewer({ open: true, src: item.url, alt: item.filename || '图片' })} />
                         ) : (
                           <div style={{ width: '100%', height: '140px', borderRadius: tokens.borderRadiusSmall, backgroundColor: tokens.colorNeutralBackground3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Text size={200} color="subtle">无图片链接</Text>
@@ -962,6 +967,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </DialogBody>
                 </DialogSurface>
               </Dialog>
+              {imageViewer.open && imageViewer.src ? (
+                <ImageViewer src={imageViewer.src} alt={imageViewer.alt} onClose={() => setImageViewer({ open: false })} />
+              ) : null}
             </div>
           ) : activeTab === 'complaintReview' ? (
             <div>
@@ -1049,11 +1057,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* 页脚 - 采用 MainLayout 的 Footer 样式 */}
+      {/* 页脚 */}
       <footer className={styles.footer}>
-        <Text size={200} color="subtle">
-          Powered By Sycamore_Whisper
-        </Text>
+        <div style={{ color: tokens.colorNeutralForeground2, fontSize: tokens.fontSizeBase200, lineHeight: '20px', textAlign: 'center' }}>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{SITE_FOOTER_MD}</ReactMarkdown>
+        </div>
       </footer>
     </div>
   );
