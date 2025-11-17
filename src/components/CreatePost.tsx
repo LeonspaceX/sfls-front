@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkIns from 'remark-ins';
+import remarkBreaks from 'remark-breaks';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
 import { uploadImage, submitPost } from '../api';
@@ -169,7 +170,11 @@ const CreatePost: React.FC<CreatePostProps> = ({ onSubmitSuccess }) => {
         <MdEditor
           value={content}
           style={{ height: '500px' }}
-          renderHTML={(text) => <ReactMarkdown remarkPlugins={[remarkGfm, remarkIns]}>{text}</ReactMarkdown>}
+          renderHTML={(text) => (
+            <ReactMarkdown remarkPlugins={[remarkGfm, remarkIns, remarkBreaks]}>
+              {text}
+            </ReactMarkdown>
+          )}
           onChange={handleEditorChange}
           onImageUpload={handleImageUpload}
         />
