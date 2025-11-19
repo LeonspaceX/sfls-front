@@ -84,7 +84,7 @@ const InitPage: React.FC = () => {
               <Input value={adminToken} onChange={(_, v) => setAdminToken(v?.value || '')} placeholder="请输入管理员令牌" />
             </Field>
             <Field label="上传目录">
-              <Input value={uploadFolder} onChange={(_, v) => setUploadFolder(v?.value || '')} placeholder="例如：img" />
+              <Input value={uploadFolder} onChange={(_, v) => setUploadFolder(v?.value || '')} placeholder="建议使用img" />
             </Field>
             <Field label="允许扩展名 (逗号分隔)">
               <Input value={allowedExtensions} onChange={(_, v) => setAllowedExtensions(v?.value || '')} placeholder="png,jpg,jpeg,gif,webp" />
