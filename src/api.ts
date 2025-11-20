@@ -35,7 +35,13 @@ export const voteArticle = async (
       },
       body: JSON.stringify({ id }),
     });
-
+    if (response.status === 403) {
+      const data = await response.json().catch(() => null);
+      if (data?.reason === 'Rate Limit Exceeded') {
+        toast.error('Rate Limit Exceeded');
+        throw new Error('Rate Limit Exceeded');
+      }
+    }
     const data = await response.json();
     if (data.status !== 'OK') {
       throw new Error(`Vote ${type} failed`);
@@ -63,6 +69,11 @@ export const submitPost = async (postData: { content: string }): Promise<SubmitP
     });
 
     if (response.status === 403) {
+      const data = await response.json().catch(() => null);
+      if (data?.reason === 'Rate Limit Exceeded') {
+        toast.error('Rate Limit Exceeded');
+        throw new Error('Rate Limit Exceeded');
+      }
       return { status: 'Deny', message: '投稿中包含违禁词', id: 'null'};
     }
 
@@ -83,7 +94,13 @@ export const uploadImage = async (formData: FormData): Promise<{ status: 'OK' | 
       method: 'POST',
       body: formData,
     });
-
+    if (response.status === 403) {
+      const data = await response.json().catch(() => null);
+      if (data?.reason === 'Rate Limit Exceeded') {
+        toast.error('Rate Limit Exceeded');
+        throw new Error('Rate Limit Exceeded');
+      }
+    }
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -113,7 +130,13 @@ export const reportPost = async (reportData: { id: number; title: string; conten
     },
     body: JSON.stringify(reportData),
   });
-
+  if (response.status === 403) {
+    const data = await response.json().catch(() => null);
+    if (data?.reason === 'Rate Limit Exceeded') {
+      toast.error('Rate Limit Exceeded');
+      throw new Error('Rate Limit Exceeded');
+    }
+  }
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -181,6 +204,11 @@ export const postComment = async (commentData: PostCommentRequest): Promise<Post
     });
 
     if (response.status === 403) {
+      const data = await response.json().catch(() => null);
+      if (data?.reason === 'Rate Limit Exceeded') {
+        toast.error('Rate Limit Exceeded');
+        throw new Error('Rate Limit Exceeded');
+      }
       throw new Error('评论包含违禁词');
     }
 
@@ -202,6 +230,7 @@ export interface InitPayload {
   allowedExtensions: string[];
   maxFileSize: number;
   bannedKeywords?: string[];
+  rateLimit: number; // 次/分钟，0为无限制
 }
 
 export const initBackend = async (payload: InitPayload): Promise<{ status: string; reason?: string }> => {
@@ -211,6 +240,7 @@ export const initBackend = async (payload: InitPayload): Promise<{ status: strin
     ALLOWED_EXTENSIONS: payload.allowedExtensions,
     MAX_FILE_SIZE: payload.maxFileSize,
     ...(payload.bannedKeywords ? { BANNED_KEYWORDS: payload.bannedKeywords } : {}),
+    RATE_LIMIT: payload.rateLimit,
   };
 
   const response = await fetch(`${API_CONFIG.BASE_URL}/init`, {

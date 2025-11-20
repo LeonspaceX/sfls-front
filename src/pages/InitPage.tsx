@@ -41,6 +41,7 @@ const InitPage: React.FC = () => {
   const [allowedExtensions, setAllowedExtensions] = useState('png,jpg,jpeg,gif,webp');
   const [maxFileSizeMB, setMaxFileSizeMB] = useState(10); // 以MB为单位，默认10MB
   const [bannedKeywords, setBannedKeywords] = useState('');
+  const [rateLimit, setRateLimit] = useState<number>(10); // 次/分钟，0为无限制
   const [initializing, setInitializing] = useState(false);
 
   const onInit = async () => {
@@ -57,6 +58,7 @@ const InitPage: React.FC = () => {
         bannedKeywords: bannedKeywords
           ? bannedKeywords.split(',').map(s => s.trim()).filter(Boolean)
           : undefined,
+        rateLimit: Number(rateLimit) || 0,
       };
 
       const res = await initBackend(payload);
@@ -99,6 +101,14 @@ const InitPage: React.FC = () => {
             </Field>
             <Field label="违禁词 (可选，逗号分隔)">
               <Textarea value={bannedKeywords} onChange={(_, v) => setBannedKeywords(v?.value || '')} resize="vertical" placeholder="例如：spam,广告,违禁词" />
+            </Field>
+            <Field label="提交内容 Rate Limit (次/分钟)">
+              <Input
+                type="number"
+                value={String(rateLimit)}
+                onChange={(_, v) => setRateLimit(Number(v?.value ?? rateLimit))}
+                placeholder="0次为无限制"
+              />
             </Field>
 
             <Button style={{ marginTop: tokens.spacingVerticalXL }} appearance="primary" onClick={onInit} disabled={initializing}>
