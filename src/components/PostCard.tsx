@@ -20,7 +20,7 @@ import {
 } from '@fluentui/react-icons';
 import ReportPost from './ReportPost';
 import CommentSection from './CommentSection';
-import ImageViewer from './ImageViewer';
+// 由上层统一挂载 ImageViewer，PostCard 只负责触发
 
 const useStyles = makeStyles({
   card: {
@@ -136,13 +136,15 @@ interface PostCardProps {
   content: string;
   upvotes: number;
   downvotes: number;
+  onPreviewImage?: (src: string, alt?: string) => void;
 }
 
 const PostCard = ({
   id,
   content,
   upvotes,
-  downvotes
+  downvotes,
+  onPreviewImage,
 }: PostCardProps) => {
   const styles = useStyles();
   const markdownContent = content;
@@ -154,13 +156,7 @@ const PostCard = ({
   const [hasVoted, setHasVoted] = React.useState(false);
   const [showReportModal, setShowReportModal] = React.useState(false);
   const [showComments, setShowComments] = React.useState(false);
-  const [imageViewer, setImageViewer] = React.useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
-
-  const openImageViewer = (src?: string, alt?: string) => {
-    if (!src) return;
-    setImageViewer({ open: true, src, alt });
-  };
-  const closeImageViewer = () => setImageViewer({ open: false });
+  // 图片预览交由上层统一处理，此处仅触发回调
 
   return (
     <Card className={styles.card}>
@@ -173,7 +169,7 @@ const PostCard = ({
                 <img
                   {...props}
                   style={{ cursor: 'zoom-in', maxWidth: '100%', height: 'auto', display: 'block' }}
-                  onClick={() => openImageViewer(props.src as string, props.alt as string)}
+                  onClick={() => onPreviewImage?.(props.src as string, props.alt as string)}
                 />
               ),
             }}
@@ -249,9 +245,7 @@ const PostCard = ({
         </div>
       )}
 
-      {imageViewer.open && imageViewer.src && (
-        <ImageViewer src={imageViewer.src!} alt={imageViewer.alt} onClose={closeImageViewer} />
-      )}
+      {/* 预览层由上层组件统一挂载，这里不再渲染 ImageViewer */}
     </Card>
   );
 };

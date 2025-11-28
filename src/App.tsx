@@ -1,7 +1,7 @@
 // 你好，感谢你愿意看源代码，但是悄悄告诉你，代码其实是AI写的所以质量很差喵。抱歉呜呜呜😭。
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FluentProvider, webLightTheme, webDarkTheme } from '@fluentui/react-components';
+import { FluentProvider, webLightTheme, webDarkTheme, tokens } from '@fluentui/react-components';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PostCard from './components/PostCard';
 import MainLayout from './layouts/MainLayout';
@@ -16,6 +16,7 @@ import ReportState from './components/ReportState';
 import AdminPage from './components/AdminPage';
 import InitPage from './pages/InitPage';
 import NotFound from './pages/NotFound';
+import ImageViewer from './components/ImageViewer';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
@@ -32,15 +33,15 @@ function App() {
   const [refreshing, setRefreshing] = useState(false);
   const observer = useRef<IntersectionObserver>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const touchStartYRef = useRef<number | null>(null);
-  const pullDeltaRef = useRef<number>(0);
   const lastRefreshAtRef = useRef<number>(0);
-  const [pullOffset, setPullOffset] = useState(0);
-  const [offsetAnimated, setOffsetAnimated] = useState(false);
-  const MAX_PULL = 80; // 最大下拉位移
-  const TRIGGER_PULL = 60; // 触发刷新的阈值
-  const DAMPING = 0.5; // 阻尼系数，减少位移幅度
   const REFRESH_COOLDOWN_MS = 5000; // 刷新冷却时间
+  const [imageViewer, setImageViewer] = useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
+
+  const openImageViewer = (src?: string, alt?: string) => {
+    if (!src) return;
+    setImageViewer({ open: true, src, alt });
+  };
+  const closeImageViewer = () => setImageViewer({ open: false });
 
   const lastArticleRef = useCallback((node: HTMLDivElement) => {
     if (loading) return;
@@ -66,40 +67,9 @@ function App() {
     if (containerRef.current) containerRef.current.scrollTop = 0;
   };
 
-  const onTouchStart: React.TouchEventHandler<HTMLDivElement> = (e) => {
-    touchStartYRef.current = e.touches[0]?.clientY ?? null;
-    pullDeltaRef.current = 0;
-    setOffsetAnimated(false);
-  };
+  // 移除触摸下拉刷新逻辑
 
-  const onTouchMove: React.TouchEventHandler<HTMLDivElement> = (e) => {
-    const startY = touchStartYRef.current;
-    if (startY == null) return;
-    const currentY = e.touches[0]?.clientY ?? startY;
-    const rawDelta = currentY - startY;
-    pullDeltaRef.current = rawDelta;
-    const atTop = (containerRef.current?.scrollTop ?? 0) <= 0;
-    if (atTop && rawDelta > 0 && !loading && !refreshing) {
-      const offset = Math.min(MAX_PULL, rawDelta * DAMPING);
-      setPullOffset(offset);
-    } else {
-      setPullOffset(0);
-    }
-  };
-
-  const onTouchEnd: React.TouchEventHandler<HTMLDivElement> = () => {
-    const atTop = (containerRef.current?.scrollTop ?? 0) <= 0;
-    const shouldRefresh = atTop && pullOffset >= TRIGGER_PULL;
-    setOffsetAnimated(true);
-    setPullOffset(0);
-    if (shouldRefresh) {
-      doRefresh();
-    }
-    touchStartYRef.current = null;
-    pullDeltaRef.current = 0;
-    // 结束后移除动画标记，下一次拖动为无动画的跟随效果
-    setTimeout(() => setOffsetAnimated(false), 220);
-  };
+  // 撤销 Pointer 事件回退，恢复为纯 Touch 逻辑
 
   const onWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
     const atTop = (containerRef.current?.scrollTop ?? 0) <= 0;
@@ -152,9 +122,6 @@ function App() {
                 <div
                   style={{ width: '100%', height: 'calc(100vh - 64px)', overflowY: 'auto', padding: '20px' }}
                   ref={containerRef}
-                  onTouchStart={onTouchStart}
-                  onTouchMove={onTouchMove}
-                  onTouchEnd={onTouchEnd}
                   onWheel={onWheel}
                 >
                   <div style={{
@@ -162,8 +129,7 @@ function App() {
                     flexDirection: 'column',
                     alignItems: 'center',
                     minHeight: '100%',
-                    transform: `translateY(${pullOffset}px)`,
-                    transition: offsetAnimated ? 'transform 200ms ease' : 'none'
+                    // 移除下拉位移动画
                   }}>
                     {/* 刷新提示改为 toast，不显示顶部灰字 */}
                     {articles.map((article, index) => {
@@ -175,6 +141,7 @@ function App() {
                               content={article.content}
                               upvotes={article.upvotes}
                               downvotes={article.downvotes}
+                              onPreviewImage={openImageViewer}
                             />
                           </div>
                         );
@@ -186,11 +153,21 @@ function App() {
                             content={article.content}
                             upvotes={article.upvotes}
                             downvotes={article.downvotes}
+                            onPreviewImage={openImageViewer}
                           />
                         );
                       }
                     })}
                     {loading && <div>加载中...</div>}
+                    {!loading && !hasMore && (
+                      <div style={{ width: '100%', display: 'flex', alignItems: 'center', margin: '16px 0' }}>
+                        <div style={{ flex: 1, height: 1, backgroundColor: tokens.colorNeutralStroke2 }} />
+                        <div style={{ padding: '0 12px', color: tokens.colorNeutralForeground3, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                          已经到底了喵~
+                        </div>
+                        <div style={{ flex: 1, height: 1, backgroundColor: tokens.colorNeutralStroke2 }} />
+                      </div>
+                    )}
                   </div>
                 </div>
               }
@@ -206,6 +183,9 @@ function App() {
         </Routes>
       </BrowserRouter>
       <ToastContainer />
+      {imageViewer.open && imageViewer.src && (
+        <ImageViewer src={imageViewer.src!} alt={imageViewer.alt} onClose={closeImageViewer} />
+      )}
     </FluentProvider>
   );
 }
