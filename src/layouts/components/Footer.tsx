@@ -19,7 +19,10 @@ const useStyles = makeStyles({
     textAlign: 'center',
     // 约束可能的图片或表格
     '& img': { maxWidth: '100%', height: 'auto', display: 'inline-block', verticalAlign: 'middle' },
-    '& a': { color: tokens.colorBrandForegroundLink },
+    '& a': { color: tokens.colorBrandForegroundLink, textDecoration: 'underline', wordBreak: 'break-word' },
+    '& a:hover': { textDecoration: 'underline' },
+    '& a:visited': { color: tokens.colorBrandForegroundLink },
+    '& a:focus': { outline: `2px solid ${tokens.colorNeutralStroke1}`, outlineOffset: '2px' },
   },
 });
 

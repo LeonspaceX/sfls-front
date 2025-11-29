@@ -47,7 +47,7 @@ export const voteArticle = async (
       throw new Error(`Vote ${type} failed`);
     }
   } catch (error) {
-    toast.error(`点赞${type === 'up' ? '赞' : '踩'}失败`);
+    toast.error(`点${type === 'up' ? '赞' : '踩'}失败`);
     throw error;
   }
 };

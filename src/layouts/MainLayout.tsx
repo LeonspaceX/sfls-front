@@ -40,6 +40,7 @@ const useStyles = makeStyles({
   content: {
     flex: '1 1 auto',
     padding: '20px',
+    paddingBottom: '64px',
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',

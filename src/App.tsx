@@ -1,4 +1,4 @@
-// 你好，感谢你愿意看源代码，但是悄悄告诉你，代码其实是AI写的所以质量很差喵。抱歉呜呜呜😭。
+// 你好，感谢你愿意看源代码，但是悄悄告诉你，代码其实是AI写的，所以质量很差喵。抱歉呜呜呜😭。
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FluentProvider, webLightTheme, webDarkTheme, tokens } from '@fluentui/react-components';
@@ -36,6 +36,8 @@ function App() {
   const lastRefreshAtRef = useRef<number>(0);
   const REFRESH_COOLDOWN_MS = 5000; // 刷新冷却时间
   const [imageViewer, setImageViewer] = useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
+  const THEME_PREF_KEY = 'ThemePref';
+  const userPrefRef = useRef<boolean>(false);
 
   const openImageViewer = (src?: string, alt?: string) => {
     if (!src) return;
@@ -67,9 +69,16 @@ function App() {
     if (containerRef.current) containerRef.current.scrollTop = 0;
   };
 
-  // 移除触摸下拉刷新逻辑
-
-  // 撤销 Pointer 事件回退，恢复为纯 Touch 逻辑
+  const handleToggleTheme = () => {
+    setIsDarkMode(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem(THEME_PREF_KEY, next ? 'dark' : 'light');
+        userPrefRef.current = true;
+      } catch {}
+      return next;
+    });
+  };
 
   const onWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
     const atTop = (containerRef.current?.scrollTop ?? 0) <= 0;
@@ -77,6 +86,43 @@ function App() {
       doRefresh();
     }
   };
+
+  useEffect(() => {
+    const mql = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    let handler: ((e: MediaQueryListEvent) => void) | null = null;
+    try {
+      const saved = localStorage.getItem(THEME_PREF_KEY);
+      if (saved === 'dark' || saved === 'light') {
+        userPrefRef.current = true;
+        setIsDarkMode(saved === 'dark');
+      } else {
+        if (mql) {
+          setIsDarkMode(mql.matches);
+          handler = (e: MediaQueryListEvent) => {
+            if (!userPrefRef.current) {
+              setIsDarkMode(e.matches);
+            }
+          };
+          if ('addEventListener' in mql) {
+            mql.addEventListener('change', handler);
+          } else {
+            // @ts-ignore
+            mql.addListener(handler);
+          }
+        }
+      }
+    } catch {}
+    return () => {
+      if (mql && handler) {
+        if ('removeEventListener' in mql) {
+          mql.removeEventListener('change', handler);
+        } else {
+          // @ts-ignore
+          mql.removeListener(handler);
+        }
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -115,7 +161,7 @@ function App() {
     <FluentProvider theme={isDarkMode ? webDarkTheme : webLightTheme}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<MainLayout isDarkMode={isDarkMode} onToggleTheme={() => setIsDarkMode(!isDarkMode)} />}>
+          <Route path="/" element={<MainLayout isDarkMode={isDarkMode} onToggleTheme={handleToggleTheme} />}>
             <Route
               index
               element={
@@ -129,9 +175,7 @@ function App() {
                     flexDirection: 'column',
                     alignItems: 'center',
                     minHeight: '100%',
-                    // 移除下拉位移动画
                   }}>
-                    {/* 刷新提示改为 toast，不显示顶部灰字 */}
                     {articles.map((article, index) => {
                       if (articles.length === index + 1 && hasMore) {
                         return (
@@ -178,7 +222,7 @@ function App() {
             <Route path="about" element={<AboutPage />} />
           </Route>
           <Route path="/init" element={<InitPage />} />
-          <Route path="/admin" element={<AdminPage isDarkMode={isDarkMode} onToggleTheme={() => setIsDarkMode(!isDarkMode)} />} />
+          <Route path="/admin" element={<AdminPage isDarkMode={isDarkMode} onToggleTheme={handleToggleTheme} />} />
            <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

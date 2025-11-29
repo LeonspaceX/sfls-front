@@ -67,6 +67,21 @@ const useStyles = makeStyles({
       textDecoration: 'underline',
       backgroundColor: 'transparent',
     },
+    '& a': {
+      color: tokens.colorBrandForegroundLink,
+      textDecoration: 'underline',
+      wordBreak: 'break-word',
+    },
+    '& a:hover': {
+      textDecoration: 'underline',
+    },
+    '& a:visited': {
+      color: tokens.colorBrandForegroundLink,
+    },
+    '& a:focus': {
+      outline: `2px solid ${tokens.colorNeutralStroke1}`,
+      outlineOffset: '2px',
+    },
   },
 });
 

@@ -92,13 +92,29 @@ const useStyles = makeStyles({
       textDecoration: 'underline',
       backgroundColor: 'transparent',
     },
+    // 链接样式与交互状态
+    '& a': {
+      color: tokens.colorBrandForegroundLink,
+      textDecoration: 'underline',
+      wordBreak: 'break-word',
+    },
+    '& a:hover': {
+      textDecoration: 'underline',
+    },
+    '& a:visited': {
+      color: tokens.colorBrandForegroundLink,
+    },
+    '& a:focus': {
+      outline: `2px solid ${tokens.colorNeutralStroke1}`,
+      outlineOffset: '2px',
+    },
     // 约束 Markdown 图片不溢出卡片
     '& img': {
       maxWidth: '100%',
       height: 'auto',
       display: 'block',
       borderRadius: tokens.borderRadiusSmall,
-    },
+    }
   },
   actions: {
     display: 'grid',
