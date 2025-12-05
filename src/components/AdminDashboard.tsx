@@ -14,6 +14,8 @@ import {
   DialogActions,
   Input,
   Tooltip,
+  Dropdown,
+  Option,
   shorthands,
 } from '@fluentui/react-components';
 import type { TabValue } from '@fluentui/react-components';
@@ -39,7 +41,12 @@ import icon from '/icon.png';
 import AdminPostCard from './AdminPostCard';
 import AdminModifyPost from './AdminModifyPost';
 import AdminManageComments from './AdminManageComments';
-import { fetchArticles, type Article } from '../api';
+import { fetchArticles, type Article, getNotice } from '../api';
+import { adminModifyNotice } from '../admin_api';
+import MdEditor from 'react-markdown-editor-lite';
+import 'react-markdown-editor-lite/lib/index.css';
+import remarkIns from 'remark-ins';
+import remarkBreaks from 'remark-breaks';
 import ImageViewer from './ImageViewer';
 
 const useStyles = makeStyles({
@@ -218,6 +225,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // 图片预览器状态
   const [imageViewer, setImageViewer] = React.useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
 
+  // 公告管理状态
+  const [noticeLoading, setNoticeLoading] = React.useState<boolean>(false);
+  const [noticeVersion, setNoticeVersion] = React.useState<number>(0);
+  const [noticeType, setNoticeType] = React.useState<'md' | 'url'>('md');
+  const [noticeContent, setNoticeContent] = React.useState<string>('');
+
   React.useEffect(() => {
     if (activeTab === 'systemSettings') {
       setLoadingAudit(true);
@@ -278,6 +291,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           }
         })
         .finally(() => setReportsLoading(false));
+    } else if (activeTab === 'noticeManage') {
+      setNoticeLoading(true);
+      getNotice()
+        .then((data) => {
+          const ver = Number(data.version ?? 0) || 0;
+          setNoticeVersion(ver);
+          setNoticeType((data.type === 'url' ? 'url' : 'md'));
+          setNoticeContent(String(data.content ?? ''));
+        })
+        .catch((err: any) => {
+          console.error(err);
+          const msg = String(err?.message || '获取公告失败');
+          if (msg.includes('401') || msg.includes('403') || msg.includes('登录已过期')) {
+            toast.error('身份验证失败，请重新登陆');
+          } else {
+            toast.error('获取公告失败');
+          }
+        })
+        .finally(() => setNoticeLoading(false));
     }
   }, [activeTab, picPage]);
 
@@ -668,13 +700,77 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <Tab value="postReview">投稿审核</Tab>
             <Tab value="complaintReview">投诉审核</Tab>
             <Tab value="imageManage">图片管理</Tab>
+            <Tab value="noticeManage">公告管理</Tab>
             <Tab value="systemSettings">系统设置</Tab>
           </TabList>
         </div>
 
         {/* 内容面板 */}
         <div className={styles.contentPanel}>
-          {activeTab === 'systemSettings' ? (
+          {activeTab === 'noticeManage' ? (
+            <div>
+              <Text size={400} weight="semibold">公告管理</Text>
+              <div style={{ marginTop: tokens.spacingVerticalS }}>
+                <Text size={200} color="subtle">当前公告版本：{noticeLoading ? '加载中...' : noticeVersion}</Text>
+              </div>
+              <div style={{ marginTop: tokens.spacingVerticalM, display: 'flex', gap: tokens.spacingHorizontalM, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Text size={300}>类型</Text>
+                <Dropdown
+                  selectedOptions={[noticeType]}
+                  onOptionSelect={(_, data) => {
+                    const v = String(data.optionValue) as 'md' | 'url';
+                    setNoticeType(v);
+                  }}
+                >
+                  <Option value="md">文本（Markdown）</Option>
+                  <Option value="url">网页（URL）</Option>
+                </Dropdown>
+              </div>
+              <div style={{ marginTop: tokens.spacingVerticalM }}>
+                {noticeType === 'md' ? (
+                  <div style={{ border: `1px solid ${tokens.colorNeutralStroke1}`, borderRadius: tokens.borderRadiusMedium, overflow: 'hidden' }}>
+                    <MdEditor
+                      value={noticeContent}
+                      style={{ height: '360px' }}
+                      renderHTML={(text) => (
+                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkIns, remarkBreaks]}>{text}</ReactMarkdown>
+                      )}
+                      onChange={({ text }: { text: string }) => setNoticeContent(text)}
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    placeholder="输入要嵌入的网页地址（URL）"
+                    value={noticeContent}
+                    onChange={(e) => setNoticeContent((e.target as HTMLInputElement).value)}
+                  />
+                )}
+              </div>
+              <div style={{ marginTop: tokens.spacingVerticalM }}>
+                <Button appearance="primary" onClick={async () => {
+                  try {
+                    const payload = { type: noticeType, content: noticeContent };
+                    await adminModifyNotice(payload);
+                    toast.success('公告已修改');
+                    setNoticeLoading(true);
+                    const data = await getNotice();
+                    setNoticeVersion(Number(data.version ?? 0) || 0);
+                    setNoticeType((data.type === 'url' ? 'url' : 'md'));
+                    setNoticeContent(String(data.content ?? ''));
+                  } catch (e: any) {
+                    const msg = String(e?.message || '修改公告失败');
+                    if (msg.includes('401') || msg.includes('403') || msg.includes('登录已过期')) {
+                      toast.error('身份验证失败，请重新登陆');
+                    } else {
+                      toast.error('修改公告失败');
+                    }
+                  } finally {
+                    setNoticeLoading(false);
+                  }
+                }}>修改公告</Button>
+              </div>
+            </div>
+          ) : activeTab === 'systemSettings' ? (
             <div>
               <Text size={400} weight="semibold">系统设置</Text>
 

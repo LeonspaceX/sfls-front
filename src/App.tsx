@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PostCard from './components/PostCard';
 import MainLayout from './layouts/MainLayout';
 import './App.css';
-import { fetchArticles } from './api';
+import { fetchArticles, getNotice } from './api';
 import CreatePost from './components/CreatePost';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -17,6 +17,7 @@ import AdminPage from './components/AdminPage';
 import InitPage from './pages/InitPage';
 import NotFound from './pages/NotFound';
 import ImageViewer from './components/ImageViewer';
+import NoticeModal from './components/NoticeModal';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
@@ -38,6 +39,7 @@ function App() {
   const [imageViewer, setImageViewer] = useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
   const THEME_PREF_KEY = 'ThemePref';
   const userPrefRef = useRef<boolean>(false);
+  const [noticeModal, setNoticeModal] = useState<{ open: boolean; type?: 'md' | 'url'; content?: string; version?: number }>({ open: false });
 
   const openImageViewer = (src?: string, alt?: string) => {
     if (!src) return;
@@ -122,6 +124,28 @@ function App() {
         }
       }
     };
+  }, []);
+
+  // 加载公告并根据版本控制显示
+  useEffect(() => {
+    const loadNotice = async () => {
+      try {
+        const data = await getNotice();
+        const ver = Number(data.version ?? 0) || 0;
+        if (ver === 0) return; // 版本为 0 不显示
+        let storedVer = 0;
+        try {
+          const v = localStorage.getItem('notice_ver');
+          storedVer = v ? Number(v) || 0 : 0;
+        } catch {}
+        if (!storedVer || ver > storedVer) {
+          setNoticeModal({ open: true, type: data.type === 'url' ? 'url' : 'md', content: String(data.content ?? ''), version: ver });
+        }
+      } catch {
+        // 获取失败则不显示公告
+      }
+    };
+    loadNotice();
   }, []);
 
   useEffect(() => {
@@ -229,6 +253,18 @@ function App() {
       <ToastContainer />
       {imageViewer.open && imageViewer.src && (
         <ImageViewer src={imageViewer.src!} alt={imageViewer.alt} onClose={closeImageViewer} />
+      )}
+      {noticeModal.open && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
+          <NoticeModal
+            data={{ type: noticeModal.type!, content: noticeModal.content || '', version: noticeModal.version || 0 }}
+            onClose={() => setNoticeModal(prev => ({ ...prev, open: false }))}
+            onNeverShow={(version) => {
+              try { localStorage.setItem('notice_ver', String(version)); } catch {}
+              setNoticeModal(prev => ({ ...prev, open: false }));
+            }}
+          />
+        </div>
       )}
     </FluentProvider>
   );

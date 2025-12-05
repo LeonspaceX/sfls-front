@@ -6,6 +6,7 @@ import 'react-markdown-editor-lite/lib/index.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkIns from 'remark-ins';
+import remarkBreaks from 'remark-breaks';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { uploadImage } from '../api';
@@ -134,7 +135,7 @@ const AdminModifyPost: React.FC<AdminModifyPostProps> = ({ postId, initialConten
         <MdEditor
           value={content}
           style={{ height: '500px' }}
-          renderHTML={(text) => <ReactMarkdown remarkPlugins={[remarkGfm, remarkIns]}>{text}</ReactMarkdown>}
+          renderHTML={(text) => <ReactMarkdown remarkPlugins={[remarkGfm, remarkIns, remarkBreaks]}>{text}</ReactMarkdown>}
           onChange={handleEditorChange}
           onImageUpload={handleImageUpload}
         />

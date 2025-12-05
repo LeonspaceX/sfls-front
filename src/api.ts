@@ -262,3 +262,23 @@ export const initBackend = async (payload: InitPayload): Promise<{ status: strin
 
   return data as { status: string; reason?: string };
 };
+
+// === Notice ===
+export interface NoticeResponse {
+  type: 'md' | 'url';
+  content: string;
+  version: string | number;
+}
+
+export const getNotice = async (): Promise<NoticeResponse> => {
+  const response = await fetch(`${API_CONFIG.BASE_URL}/get/notice`, { method: 'GET' });
+  if (!response.ok) {
+    throw new Error(`获取公告失败: ${response.status}`);
+  }
+  const data = await response.json();
+  return {
+    type: (data?.type === 'url' ? 'url' : 'md') as 'md' | 'url',
+    content: String(data?.content ?? ''),
+    version: data?.version ?? '0',
+  };
+};

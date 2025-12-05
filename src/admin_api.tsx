@@ -182,6 +182,23 @@ export const adminApiRequest = async (
 };
 
 /**
+ * 修改公告（后端自动递增版本）
+ * POST /admin/modify_notice { type: 'md' | 'url', content: string }
+ */
+export const adminModifyNotice = async (
+  payload: { type: 'md' | 'url'; content: string }
+): Promise<{ status: 'OK'; version?: number }> => {
+  const resp = await adminApiRequest('/modify_notice', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!resp.ok) {
+    throw new Error(`修改公告失败: ${resp.status}`);
+  }
+  return resp.json();
+};
+
+/**
  * 创建备份并返回 ZIP 文件 Blob 与文件名
  * GET /admin/get/backup -> ZIP
  */
