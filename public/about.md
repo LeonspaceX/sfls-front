@@ -1,12 +1,54 @@
-# Hi~欢迎来到Sycamore_Whisper匿名投稿站！
-这是一个站点关于页面。
+# Hi~欢迎来到SFLS匿名投稿站
+Welcome to SFLS Anonymous Submission Site!
+## 🤔 这是什么？
+这里是附中人的匿名树洞！又或者说是校园墙。基于项目[Sycamore_whisper](https://github.com/Sycamore-Whisper)。
 
+Sycamore_whisper与传统校园墙不同的是，投稿会被直接发送到网站（而不是由用户发送到一个微信账户或公众号，再由校园墙运营者发送），无**任何**中转，**任何人**都无法追溯投稿来自哪里。
 
+## 😋 如何使用？
 
-这里的内容来自开发环境下的/public/about.md，请编辑此文件以便在这里显示自己的内容！
+目前的功能有这些：
+ - 投稿
 
-如果你不了解Markdown文档的语法，可以前往[这里](https://www.runoob.com/markdown/md-tutorial.html)简单学习
+ - 上传图片
 
+ - 评论
 
+ - 点赞/踩
 
-Made with ❤️ By Leonxie
+ - 投诉
+
+均可以在边侧栏和文章卡片上找到！
+
+## 😎 技术栈？
+
+前端：Vite+React
+
+后端：Python Flask
+
+## 😡 不允许的内容
+
+1、违法内容，包括但不限于色情、暴力、恐怖袭击、翻墙。
+
+2、人身攻击或恶意辱骂。
+
+3、涉政内容。
+
+4、极具争议性内容。
+
+5、令人不适内容。
+
+如果看到，请使用投诉功能，感谢~我们需要一个干净的环境！
+
+## 友情链接！
+
+[Leonxieの小窝](https://leonxie.cn)
+
+[SmBlog](http://smstars.top/)
+
+## 免责声明
+
+本站与上海外国语大学附属外国语学校无任何直接或间接联系。如果您希望前往学校官网，请点击[该链接](https://sfls.cn)。本站内容均为他人投稿，不代表站长立场，敬请自行辨别。本站不接受任何违法、违规内容，如果审核出现纰漏请立即投诉。
+
+---
+End.
