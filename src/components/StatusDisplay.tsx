@@ -53,10 +53,10 @@ const StatusDisplay: React.FC = () => {
     const fetchStatus = async () => {
       try {
         // Check API online status
-        const teapotResponse = await fetch(`${API_CONFIG.BASE_URL}/test`);
-        if (teapotResponse.status === 200) {
+        const TestAPIResponse = await fetch(`${API_CONFIG.BASE_URL}/test`);
+        if (TestAPIResponse.status === 200) {
           setIsApiOnline(true);
-        } else if (teapotResponse.status === 503) {
+        } else if (TestAPIResponse.status === 503) {
           setIsApiOnline(false);
           if (location.pathname !== '/init') {
             navigate('/init');
@@ -88,7 +88,7 @@ const StatusDisplay: React.FC = () => {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 30000); // Refresh every 30 seconds
+    const interval = setInterval(fetchStatus, 60000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
   }, [navigate, location.pathname]);
