@@ -1,5 +1,6 @@
 import { makeStyles, Text, tokens, Button } from '@fluentui/react-components';
 import { WeatherSunny24Regular, WeatherMoon24Regular, Code24Regular } from '@fluentui/react-icons';
+import { useNavigate } from 'react-router-dom';
 
 import icon from '/icon.png';
 import { SITE_TITLE, EnableCodeIcon, RepoUrl } from '../../config';
@@ -19,6 +20,12 @@ const useStyles = makeStyles({
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalS,
+    cursor: 'pointer',
+    textDecoration: 'none',
+    color: 'inherit',
+    '&:hover': {
+      opacity: 0.8,
+    },
   },
   icon: {
     height: '32px',
@@ -43,10 +50,15 @@ interface HeaderProps {
 
 const Header = ({ isDarkMode, onToggleTheme, onToggleSidebar }: HeaderProps) => {
   const styles = useStyles();
+  const navigate = useNavigate();
+
+  const handleTitleClick = () => {
+    navigate('/');
+  };
 
   return (
     <header className={styles.header}>
-      <Text size={500} weight="semibold" className={styles.title}>
+      <Text size={500} weight="semibold" className={styles.title} onClick={handleTitleClick}>
         <img src={icon} alt="logo" className={styles.icon} />
          {SITE_TITLE}
       </Text>

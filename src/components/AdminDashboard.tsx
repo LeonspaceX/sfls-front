@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   makeStyles,
   Button,
@@ -76,6 +77,7 @@ const useStyles = makeStyles({
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalS,
+    cursor: 'pointer',
   },
   icon: {
     height: '32px',
@@ -170,6 +172,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isDarkMode = false, 
   onToggleTheme 
 }) => {
+  const navigate = useNavigate();
   const styles = useStyles();
   const [activeTab, setActiveTab] = React.useState<TabValue>('systemSettings');
   const [postReviewSubTab, setPostReviewSubTab] = React.useState<TabValue>('pending');
@@ -665,7 +668,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className={styles.root}>
       {/* 顶栏 - 采用 MainLayout 的 Header 样式 */}
       <header className={styles.header}>
-        <Text size={500} weight="semibold" className={styles.title}>
+        <Text size={500} weight="semibold" className={styles.title} onClick={() => navigate('/')} title="返回首页">
           <img src={icon} alt="logo" className={styles.icon} />
           {`${SITE_TITLE} | 管理面板`}
         </Text>
