@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { isAdminLoggedIn } from '../admin_api';
 import AdminLogin from './AdminLogin';
 import AdminDashboard from './AdminDashboard';
-import { Toaster } from 'react-hot-toast';
 
 interface AdminPageProps {
   isDarkMode: boolean;
@@ -43,7 +42,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ isDarkMode, onToggleTheme }) => {
       ) : (
         <AdminLogin onLoginSuccess={handleLoginSuccess} />
       )}
-      <Toaster position="top-center" />
     </>
   );
 };

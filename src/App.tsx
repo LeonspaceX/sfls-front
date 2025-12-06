@@ -1,4 +1,4 @@
-// 你好，感谢你愿意看源代码，但是悄悄告诉你，代码其实是AI写的，所以质量很差喵。抱歉呜呜呜😭。
+// 你好，感谢你愿意看源代码，但是悄悄告诉你，代码其实是AI写的所以质量很差喵。抱歉呜呜呜😭。
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FluentProvider, webLightTheme, webDarkTheme, tokens } from '@fluentui/react-components';
@@ -6,10 +6,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PostCard from './components/PostCard';
 import MainLayout from './layouts/MainLayout';
 import './App.css';
-import { fetchArticles, getNotice } from './api';
+import { fetchArticles } from './api';
 import CreatePost from './components/CreatePost';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Toaster } from 'react-hot-toast';
 import AboutPage from './components/AboutPage';
 import PostState from './components/PostState';
 import ReportState from './components/ReportState';
@@ -17,10 +18,22 @@ import AdminPage from './components/AdminPage';
 import InitPage from './pages/InitPage';
 import NotFound from './pages/NotFound';
 import ImageViewer from './components/ImageViewer';
-import NoticeModal from './components/NoticeModal';
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    if (isDarkMode) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+  }, [isDarkMode]);
+
   const [articles, setArticles] = useState<Array<{
     id: number;
     content: string;
@@ -37,9 +50,6 @@ function App() {
   const lastRefreshAtRef = useRef<number>(0);
   const REFRESH_COOLDOWN_MS = 5000; // 刷新冷却时间
   const [imageViewer, setImageViewer] = useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
-  const THEME_PREF_KEY = 'ThemePref';
-  const userPrefRef = useRef<boolean>(false);
-  const [noticeModal, setNoticeModal] = useState<{ open: boolean; type?: 'md' | 'url'; content?: string; version?: number }>({ open: false });
 
   const openImageViewer = (src?: string, alt?: string) => {
     if (!src) return;
@@ -71,16 +81,9 @@ function App() {
     if (containerRef.current) containerRef.current.scrollTop = 0;
   };
 
-  const handleToggleTheme = () => {
-    setIsDarkMode(prev => {
-      const next = !prev;
-      try {
-        localStorage.setItem(THEME_PREF_KEY, next ? 'dark' : 'light');
-        userPrefRef.current = true;
-      } catch {}
-      return next;
-    });
-  };
+  // 移除触摸下拉刷新逻辑
+
+  // 撤销 Pointer 事件回退，恢复为纯 Touch 逻辑
 
   const onWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
     const atTop = (containerRef.current?.scrollTop ?? 0) <= 0;
@@ -88,65 +91,6 @@ function App() {
       doRefresh();
     }
   };
-
-  useEffect(() => {
-    const mql = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-    let handler: ((e: MediaQueryListEvent) => void) | null = null;
-    try {
-      const saved = localStorage.getItem(THEME_PREF_KEY);
-      if (saved === 'dark' || saved === 'light') {
-        userPrefRef.current = true;
-        setIsDarkMode(saved === 'dark');
-      } else {
-        if (mql) {
-          setIsDarkMode(mql.matches);
-          handler = (e: MediaQueryListEvent) => {
-            if (!userPrefRef.current) {
-              setIsDarkMode(e.matches);
-            }
-          };
-          if ('addEventListener' in mql) {
-            mql.addEventListener('change', handler);
-          } else {
-            // @ts-ignore
-            mql.addListener(handler);
-          }
-        }
-      }
-    } catch {}
-    return () => {
-      if (mql && handler) {
-        if ('removeEventListener' in mql) {
-          mql.removeEventListener('change', handler);
-        } else {
-          // @ts-ignore
-          mql.removeListener(handler);
-        }
-      }
-    };
-  }, []);
-
-  // 加载公告并根据版本控制显示
-  useEffect(() => {
-    const loadNotice = async () => {
-      try {
-        const data = await getNotice();
-        const ver = Number(data.version ?? 0) || 0;
-        if (ver === 0) return; // 版本为 0 不显示
-        let storedVer = 0;
-        try {
-          const v = localStorage.getItem('notice_ver');
-          storedVer = v ? Number(v) || 0 : 0;
-        } catch {}
-        if (!storedVer || ver > storedVer) {
-          setNoticeModal({ open: true, type: data.type === 'url' ? 'url' : 'md', content: String(data.content ?? ''), version: ver });
-        }
-      } catch {
-        // 获取失败则不显示公告
-      }
-    };
-    loadNotice();
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -185,7 +129,7 @@ function App() {
     <FluentProvider theme={isDarkMode ? webDarkTheme : webLightTheme}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<MainLayout isDarkMode={isDarkMode} onToggleTheme={handleToggleTheme} />}>
+          <Route path="/" element={<MainLayout isDarkMode={isDarkMode} onToggleTheme={() => setIsDarkMode(!isDarkMode)} />}>
             <Route
               index
               element={
@@ -199,7 +143,9 @@ function App() {
                     flexDirection: 'column',
                     alignItems: 'center',
                     minHeight: '100%',
+                    // 移除下拉位移动画
                   }}>
+                    {/* 刷新提示改为 toast，不显示顶部灰字 */}
                     {articles.map((article, index) => {
                       if (articles.length === index + 1 && hasMore) {
                         return (
@@ -246,28 +192,29 @@ function App() {
             <Route path="about" element={<AboutPage />} />
           </Route>
           <Route path="/init" element={<InitPage />} />
-          <Route path="/admin" element={<AdminPage isDarkMode={isDarkMode} onToggleTheme={handleToggleTheme} />} />
+          <Route path="/admin" element={<AdminPage isDarkMode={isDarkMode} onToggleTheme={() => setIsDarkMode(!isDarkMode)} />} />
            <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-      <ToastContainer />
+      <ToastContainer theme={isDarkMode ? 'dark' : 'light'} />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: isDarkMode ? '#333' : '#fff',
+            color: isDarkMode ? '#fff' : '#333',
+          },
+        }}
+      />
       {imageViewer.open && imageViewer.src && (
         <ImageViewer src={imageViewer.src!} alt={imageViewer.alt} onClose={closeImageViewer} />
-      )}
-      {noticeModal.open && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
-          <NoticeModal
-            data={{ type: noticeModal.type!, content: noticeModal.content || '', version: noticeModal.version || 0 }}
-            onClose={() => setNoticeModal(prev => ({ ...prev, open: false }))}
-            onNeverShow={(version) => {
-              try { localStorage.setItem('notice_ver', String(version)); } catch {}
-              setNoticeModal(prev => ({ ...prev, open: false }));
-            }}
-          />
-        </div>
       )}
     </FluentProvider>
   );
 }
 
 export default App;
+
+
+
+

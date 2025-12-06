@@ -25,3 +25,48 @@
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #3a3a3a;
 }
+
+/* react-markdown-editor-lite 深色模式适配 */
+body.dark-theme .rc-md-editor {
+  background-color: #292929;
+  border-color: #3e3e3e;
+  color: #e0e0e0;
+}
+
+body.dark-theme .rc-md-editor .rc-md-navigation {
+  background-color: #333;
+  border-bottom-color: #3e3e3e;
+}
+
+body.dark-theme .rc-md-editor .rc-md-navigation .button-wrap .button {
+  color: #e0e0e0;
+}
+
+body.dark-theme .rc-md-editor .rc-md-navigation .button-wrap .button:hover {
+  background-color: #444;
+}
+
+body.dark-theme .rc-md-editor .editor-container .section {
+  border-right-color: #3e3e3e;
+}
+
+body.dark-theme .rc-md-editor .editor-container .sec-md .input {
+  background-color: #292929;
+  color: #e0e0e0;
+}
+
+body.dark-theme .rc-md-editor .editor-container .sec-html {
+  background-color: #292929;
+  color: #e0e0e0;
+}
+
+/* 预览区域的代码块样式适配 */
+body.dark-theme .rc-md-editor .editor-container .sec-html pre {
+  background-color: #1e1e1e;
+  border: 1px solid #3e3e3e;
+}
+
+body.dark-theme .rc-md-editor .editor-container .sec-html code {
+  background-color: #1e1e1e;
+  color: #ce9178;
+}

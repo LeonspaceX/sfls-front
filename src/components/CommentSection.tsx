@@ -12,7 +12,7 @@ import {
 import { Dismiss24Regular, ArrowReply24Regular } from '@fluentui/react-icons';
 import { getComments, postComment } from '../api';
 import type { Comment as CommentType } from '../api';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 const useStyles = makeStyles({
   container: {
@@ -225,7 +225,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         {!loading && comments.length === 0 && <Text>暂无评论</Text>}
         {renderComments()}
       </div>
-      <Toaster position="top-center" />
     </div>
   );
 };
