@@ -51,6 +51,7 @@ export interface NoticeData {
   type: 'md' | 'url';
   content: string;
   version: number;
+  display?: string;
 }
 
 interface NoticeModalProps {
@@ -92,3 +93,4 @@ const NoticeModal: React.FC<NoticeModalProps> = ({ data, onClose, onNeverShow })
 
 export default NoticeModal;
 
+

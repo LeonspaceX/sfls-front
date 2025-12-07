@@ -21,7 +21,7 @@ import {
 } from '@fluentui/react-components';
 import type { TabValue } from '@fluentui/react-components';
 import { getAuditMode, setAuditMode, getBackupZip, recoverBackup, getPicLinks, deletePic, type PicLink, getPendingReports, approveReport, rejectReport, type PendingReport, getAdminPostInfo, getPendingPosts, getRejectedPosts, type AdminPostListItem, approvePost, disapprovePost, reauditPost, deletePost, 
-  getBannedKeywords, setBannedKeywordsList } from '../admin_api';
+  getBannedKeywords, setBannedKeywordsList, adminNoticeSwitch } from '../admin_api';
 import { Switch } from '@fluentui/react-components';
 import { toast } from 'react-hot-toast';
 import { 
@@ -182,6 +182,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [selectedBackupFile, setSelectedBackupFile] = React.useState<File | null>(null);
   const [confirmOpen, setConfirmOpen] = React.useState<boolean>(false);
+  const [clearCacheConfirmOpen, setClearCacheConfirmOpen] = React.useState<boolean>(false);
   // 图片管理状态
   const [picPage, setPicPage] = React.useState<number>(1);
   const [picLoading, setPicLoading] = React.useState<boolean>(false);
@@ -233,6 +234,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [noticeVersion, setNoticeVersion] = React.useState<number>(0);
   const [noticeType, setNoticeType] = React.useState<'md' | 'url'>('md');
   const [noticeContent, setNoticeContent] = React.useState<string>('');
+  const [noticeDisplay, setNoticeDisplay] = React.useState<boolean>(true);
 
   React.useEffect(() => {
     if (activeTab === 'systemSettings') {
@@ -298,21 +300,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setNoticeLoading(true);
       getNotice()
         .then((data) => {
-          const ver = Number(data.version ?? 0) || 0;
-          setNoticeVersion(ver);
+          setNoticeVersion(Number(data.version ?? 0) || 0);
           setNoticeType((data.type === 'url' ? 'url' : 'md'));
           setNoticeContent(String(data.content ?? ''));
+          setNoticeDisplay(data.display !== 'false');
         })
         .catch((err: any) => {
           console.error(err);
-          const msg = String(err?.message || '获取公告失败');
+          toast.error('获取公告失败');
+        })
+        .finally(() => setNoticeLoading(false));
+    } else if (activeTab === 'postReview') {
+      setLoadingAudit(true);
+      getAuditMode()
+        .then(data => {
+          setNeedAudit(!!data.status);
+        })
+        .catch((err: any) => {
+          console.error(err);
+          const msg = String(err?.message || '获取审核模式失败');
           if (msg.includes('401') || msg.includes('403') || msg.includes('登录已过期')) {
             toast.error('身份验证失败，请重新登陆');
           } else {
-            toast.error('获取公告失败');
+            toast.error('获取审核模式失败');
           }
         })
-        .finally(() => setNoticeLoading(false));
+        .finally(() => setLoadingAudit(false));
+
+      // 加载违禁词
+      setBannedLoading(true);
+      getBannedKeywords()
+        .then((list) => setBannedKeywords(Array.isArray(list) ? list : []))
+        .catch((err: any) => {
+          console.error(err);
+          const msg = String(err?.message || '获取违禁词失败');
+          if (msg.includes('401') || msg.includes('403') || msg.includes('登录已过期')) {
+            toast.error('身份验证失败，请重新登陆');
+          } else {
+            toast.error('获取违禁词失败');
+          }
+        })
+        .finally(() => setBannedLoading(false));
     }
   }, [activeTab, picPage]);
 
@@ -569,6 +597,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     void handleRecoverBackup(selectedBackupFile);
   };
 
+  const handleClearCache = async () => {
+    // Clear localStorage
+    localStorage.clear();
+
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    // Clear caches
+    if ('caches' in window) {
+      try {
+        const names = await caches.keys();
+        await Promise.all(names.map(name => caches.delete(name)));
+      } catch (e) {
+        console.error('Failed to clear caches:', e);
+      }
+    }
+
+    toast.success('缓存已清理');
+    setClearCacheConfirmOpen(false);
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  };
+
   const handleLogout = () => {
     try {
       adminLogout();
@@ -713,6 +773,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'noticeManage' ? (
             <div>
               <Text size={400} weight="semibold">公告管理</Text>
+
+              <div style={{ marginTop: tokens.spacingVerticalM }}>
+                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: tokens.spacingVerticalM }}>
+                    <Switch
+                      checked={noticeDisplay}
+                      onChange={async (_, data) => {
+                        try {
+                          await adminNoticeSwitch(!!data.checked);
+                          setNoticeDisplay(!!data.checked);
+                          toast.success(`公告已${data.checked ? '开启' : '关闭'}`);
+                        } catch (e: any) {
+                           toast.error(e.message || '切换状态失败');
+                        }
+                      }}
+                      label={noticeDisplay ? "公告已开启" : "公告已关闭"}
+                    />
+                 </div>
+              </div>
+
               <div style={{ marginTop: tokens.spacingVerticalS }}>
                 <Text size={200} color="subtle">当前公告版本：{noticeLoading ? '加载中...' : noticeVersion}</Text>
               </div>
@@ -752,8 +831,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div style={{ marginTop: tokens.spacingVerticalM }}>
                 <Button appearance="primary" onClick={async () => {
                   try {
-                    const payload = { type: noticeType, content: noticeContent };
-                    await adminModifyNotice(payload);
+                    await adminModifyNotice(noticeType, noticeContent, noticeVersion + 1);
                     toast.success('公告已修改');
                     setNoticeLoading(true);
                     const data = await getNotice();
@@ -877,6 +955,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </Text>
               </div>
 
+              {/* 开发者工具 */}
+              <div style={{ marginTop: tokens.spacingVerticalL }}>
+                <Text size={300}>开发者工具</Text>
+                <div style={{ marginTop: tokens.spacingVerticalS }}>
+                  <Button appearance="secondary" onClick={() => setClearCacheConfirmOpen(true)}>
+                    清除缓存
+                  </Button>
+                </div>
+                <Text size={200} color="subtle" style={{ marginTop: tokens.spacingVerticalS, display: 'block' }}>
+                  将清理 localStorage、Cookies 及静态资源缓存。
+                </Text>
+              </div>
+
               {/* 确认对话框 */}
               <Dialog open={confirmOpen} onOpenChange={(_, data) => setConfirmOpen(!!data.open)}>
                 <DialogSurface>
@@ -888,6 +979,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <DialogActions>
                       <Button appearance="secondary" onClick={() => setConfirmOpen(false)}>取消</Button>
                       <Button appearance="primary" onClick={handleConfirmRecover} disabled={!selectedBackupFile || recovering}>确认</Button>
+                    </DialogActions>
+                  </DialogBody>
+                </DialogSurface>
+              </Dialog>
+
+              {/* 清除缓存确认对话框 */}
+              <Dialog open={clearCacheConfirmOpen} onOpenChange={(_, data) => setClearCacheConfirmOpen(!!data.open)}>
+                <DialogSurface>
+                  <DialogBody>
+                    <DialogTitle>确认清除缓存</DialogTitle>
+                    <DialogContent>
+                      确定要清除所有缓存吗？这将包括登录状态和本地设置。
+                    </DialogContent>
+                    <DialogActions>
+                      <Button appearance="secondary" onClick={() => setClearCacheConfirmOpen(false)}>取消</Button>
+                      <Button appearance="primary" onClick={handleClearCache}>确认</Button>
                     </DialogActions>
                   </DialogBody>
                 </DialogSurface>
@@ -1167,3 +1274,5 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 };
 
 export default AdminDashboard;
+
+
