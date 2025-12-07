@@ -268,6 +268,7 @@ export interface NoticeResponse {
   type: 'md' | 'url';
   content: string;
   version: string | number;
+  display?: string;
 }
 
 export const getNotice = async (): Promise<NoticeResponse> => {
@@ -280,5 +281,7 @@ export const getNotice = async (): Promise<NoticeResponse> => {
     type: (data?.type === 'url' ? 'url' : 'md') as 'md' | 'url',
     content: String(data?.content ?? ''),
     version: data?.version ?? '0',
+    display: data?.display ?? 'true',
   };
 };
+

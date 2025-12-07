@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PostCard from './components/PostCard';
 import MainLayout from './layouts/MainLayout';
 import './App.css';
-import { fetchArticles } from './api';
+import { fetchArticles, getNotice } from './api';
 import CreatePost from './components/CreatePost';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -18,6 +18,8 @@ import AdminPage from './components/AdminPage';
 import InitPage from './pages/InitPage';
 import NotFound from './pages/NotFound';
 import ImageViewer from './components/ImageViewer';
+import NoticeModal from './components/NoticeModal';
+import type { NoticeData } from './components/NoticeModal';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = React.useState(() => {
@@ -50,6 +52,30 @@ function App() {
   const lastRefreshAtRef = useRef<number>(0);
   const REFRESH_COOLDOWN_MS = 5000; // 刷新冷却时间
   const [imageViewer, setImageViewer] = useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
+  const [noticeData, setNoticeData] = useState<NoticeData | null>(null);
+  const [showNotice, setShowNotice] = useState(false);
+
+  useEffect(() => {
+    getNotice().then(data => {
+      // Check display status
+      if (data.display === 'false') {
+        setShowNotice(false);
+        return;
+      }
+
+      const savedVersion = localStorage.getItem('notice_version');
+      // 只有当有内容且版本号大于本地存储的版本时才显示
+      if (data.content && (!savedVersion || Number(savedVersion) < Number(data.version))) {
+        setNoticeData({
+          type: data.type,
+          content: data.content,
+          version: Number(data.version),
+          display: data.display
+        });
+        setShowNotice(true);
+      }
+    }).catch(console.error);
+  }, []);
 
   const openImageViewer = (src?: string, alt?: string) => {
     if (!src) return;
@@ -209,11 +235,37 @@ function App() {
       {imageViewer.open && imageViewer.src && (
         <ImageViewer src={imageViewer.src!} alt={imageViewer.alt} onClose={closeImageViewer} />
       )}
+      {showNotice && noticeData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <NoticeModal
+            data={noticeData}
+            onClose={() => setShowNotice(false)}
+            onNeverShow={(version) => {
+              localStorage.setItem('notice_version', String(version));
+              setShowNotice(false);
+            }}
+          />
+        </div>
+      )}
     </FluentProvider>
   );
 }
 
 export default App;
+
+
+
 
 
 

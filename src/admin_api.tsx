@@ -185,17 +185,30 @@ export const adminApiRequest = async (
  * 修改公告（后端自动递增版本）
  * POST /admin/modify_notice { type: 'md' | 'url', content: string }
  */
-export const adminModifyNotice = async (
-  payload: { type: 'md' | 'url'; content: string }
-): Promise<{ status: 'OK'; version?: number }> => {
+export const adminModifyNotice = async (type: 'md'|'url', content: string, version: number): Promise<void> => {
   const resp = await adminApiRequest('/modify_notice', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ type, content, version }),
   });
   if (!resp.ok) {
-    throw new Error(`修改公告失败: ${resp.status}`);
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.reason || `修改公告失败: ${resp.status}`);
   }
-  return resp.json();
+};
+
+/**
+ * 切换公告开启状态
+ * POST /admin/notice_switch { value: "true" | "false" }
+ */
+export const adminNoticeSwitch = async (value: boolean): Promise<void> => {
+  const resp = await adminApiRequest('/notice_switch', {
+    method: 'POST',
+    body: JSON.stringify({ value: value ? "true" : "false" }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.reason || `切换公告状态失败: ${resp.status}`);
+  }
 };
 
 /**
