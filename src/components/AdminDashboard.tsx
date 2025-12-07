@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   makeStyles,
   Button,
@@ -173,6 +173,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onToggleTheme 
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const styles = useStyles();
   const [activeTab, setActiveTab] = React.useState<TabValue>('systemSettings');
   const [postReviewSubTab, setPostReviewSubTab] = React.useState<TabValue>('pending');
@@ -962,10 +963,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <Button appearance="secondary" onClick={() => setClearCacheConfirmOpen(true)}>
                     清除缓存
                   </Button>
+                  <Button 
+                    appearance={new URLSearchParams(location.search).get('debug') === 'true' ? "primary" : "secondary"}
+                    style={{ marginLeft: tokens.spacingHorizontalS }}
+                    onClick={() => {
+                      const params = new URLSearchParams(location.search);
+                      const isDebug = params.get('debug') === 'true';
+                      if (isDebug) {
+                        params.set('debug', 'false');
+                      } else {
+                        params.set('debug', 'true');
+                      }
+                      window.location.search = params.toString();
+                    }}
+                  >
+                    {new URLSearchParams(location.search).get('debug') === 'true' ? '关闭调试工具' : '开启调试工具'}
+                  </Button>
                 </div>
-                <Text size={200} color="subtle" style={{ marginTop: tokens.spacingVerticalS, display: 'block' }}>
-                  将清理 localStorage、Cookies 及静态资源缓存。
-                </Text>
               </div>
 
               {/* 确认对话框 */}
@@ -1274,5 +1288,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 };
 
 export default AdminDashboard;
+
 
 

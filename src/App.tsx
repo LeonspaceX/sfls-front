@@ -1,7 +1,7 @@
 // 你好，感谢你愿意看源代码，但是悄悄告诉你，代码其实是AI写的所以质量很差喵。抱歉呜呜呜😭。
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FluentProvider, webLightTheme, webDarkTheme, tokens } from '@fluentui/react-components';
+import { FluentProvider, webLightTheme, webDarkTheme, tokens, Button } from '@fluentui/react-components';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PostCard from './components/PostCard';
 import MainLayout from './layouts/MainLayout';
@@ -20,6 +20,8 @@ import NotFound from './pages/NotFound';
 import ImageViewer from './components/ImageViewer';
 import NoticeModal from './components/NoticeModal';
 import type { NoticeData } from './components/NoticeModal';
+import DevToolsModal from './components/DevToolsModal';
+import { Bug24Regular } from '@fluentui/react-icons';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = React.useState(() => {
@@ -54,6 +56,13 @@ function App() {
   const [imageViewer, setImageViewer] = useState<{ open: boolean; src?: string; alt?: string }>({ open: false });
   const [noticeData, setNoticeData] = useState<NoticeData | null>(null);
   const [showNotice, setShowNotice] = useState(false);
+  const [showDevTools, setShowDevTools] = useState(false);
+  const [isDebugMode, setIsDebugMode] = useState(false);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    setIsDebugMode(searchParams.get('debug') === 'true');
+  }, []);
 
   useEffect(() => {
     getNotice().then(data => {
@@ -258,11 +267,27 @@ function App() {
           />
         </div>
       )}
+
+      {/* DevTools Trigger */}
+      {isDebugMode && (
+        <div style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 9999 }}>
+          <Button
+            icon={<Bug24Regular />}
+            appearance="primary"
+            shape="circular"
+            onClick={() => setShowDevTools(true)}
+            aria-label="Developer Tools"
+          />
+        </div>
+      )}
+      {showDevTools && <DevToolsModal onClose={() => setShowDevTools(false)} />}
     </FluentProvider>
   );
 }
 
 export default App;
+
+
 
 
 
