@@ -252,7 +252,6 @@ function App() {
           page={page}
           loading={loading}
           hasMore={hasMore}
-          refreshing={refreshing}
           containerRef={containerRef}
           lastArticleRef={lastArticleRef}
           onWheel={onWheel}
@@ -263,7 +262,6 @@ function App() {
           handleNewPost={handleNewPost}
           handleNewPostBarDismiss={handleNewPostBarDismiss}
           isDebugMode={isDebugMode}
-          showDevTools={showDevTools}
           setShowDevTools={setShowDevTools}
         />
         <ToastContainer theme={isDarkMode ? 'dark' : 'light'} />
@@ -315,7 +313,6 @@ function AppContent({
   articles,
   loading,
   hasMore,
-  refreshing,
   containerRef,
   lastArticleRef,
   onWheel,
@@ -326,7 +323,6 @@ function AppContent({
   handleNewPost,
   handleNewPostBarDismiss,
   isDebugMode,
-  showDevTools,
   setShowDevTools,
 }: any) {
   const navigate = useNavigate();
@@ -373,7 +369,7 @@ function AppContent({
                     // 移除下拉位移动画
                   }}>
                     {/* 刷新提示改为 toast，不显示顶部灰字 */}
-                    {articles.map((article, index) => {
+                    {articles.map((article: { id: number; content: string; upvotes: number; downvotes: number }, index: number) => {
                       if (articles.length === index + 1 && hasMore) {
                         return (
                           <div ref={lastArticleRef} key={article.id}>
