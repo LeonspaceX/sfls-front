@@ -17,7 +17,7 @@ export function useSSE(options: UseSSEOptions = {}) {
   const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const retriesRef = useRef(0);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
   const onNewPostRef = useRef(onNewPost);
 
   // 更新 ref 以获取最新的回调
